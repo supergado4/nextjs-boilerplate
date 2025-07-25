@@ -1,103 +1,314 @@
-import Image from "next/image";
+// Adaptado para Next.js
+// La directiva 'use client' es esencial para que los componentes interactivos
+// (que usan hooks como useState) funcionen en el App Router de Next.js.
+'use client';
 
-export default function Home() {
+import React, { useState, useMemo } from 'react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { ChevronRight, Mail, BarChart2, Users, Zap, Target, CheckCircle } from 'lucide-react';
+
+// --- DATOS DE LA AUDITORÍA ---
+// La estructura de datos permanece idéntica.
+const auditData = {
+  questions: [
+    {
+      category: 'Omnicanalidad e Integración',
+      question: '¿Qué tan bien integrado está tu programa de lealtad con tus canales de comunicación (Web, RRSS, Email, WhatsApp, etc.)?',
+      options: [
+        { text: 'No está integrado', score: 1 },
+        { text: 'Hay integración parcial y manual', score: 2 },
+        { text: 'Está integrado pero no sincronizado en tiempo real', score: 3 },
+        { text: 'Bien integrado con algunos canales clave', score: 4 },
+        { text: 'Totalmente integrado y automatizado en todos los canales', score: 5 },
+      ],
+    },
+    {
+      category: 'Experiencia Digital',
+      question: '¿Cómo calificarías la experiencia digital (UX/UI) del sitio web o la plataforma donde vive tu programa?',
+      options: [
+        { text: 'Confusa y difícil de usar', score: 1 },
+        { text: 'Funcional pero poco atractiva y algo compleja', score: 2 },
+        { text: 'Clara y fácil de navegar, pero básica', score: 3 },
+        { text: 'Moderna, intuitiva y agradable visualmente', score: 4 },
+        { text: 'Excepcional, fluida y totalmente optimizada para móviles', score: 5 },
+      ],
+    },
+    {
+      category: 'Personalización',
+      question: '¿Qué nivel de personalización ofreces en las recompensas y comunicaciones del programa?',
+      options: [
+        { text: 'Ninguna, todos los miembros reciben lo mismo', score: 1 },
+        { text: 'Segmentación básica por nivel o antigüedad', score: 2 },
+        { text: 'Comunicaciones personalizadas con el nombre del miembro', score: 3 },
+        { text: 'Ofertas y recompensas basadas en el historial de compras', score: 4 },
+        { text: 'Personalización predictiva y en tiempo real basada en IA', score: 5 },
+      ],
+    },
+    {
+      category: 'Comunicación y Engagement',
+      question: '¿Con qué frecuencia y a través de qué canales comunicas activamente los beneficios y novedades del programa?',
+      options:
+      [
+        { text: 'Casi nunca o solo al momento de la inscripción', score: 1 },
+        { text: 'Ocasionalmente, principalmente por email', score: 2 },
+        { text: 'De forma regular, pero en un solo canal principal', score: 3 },
+        { text: 'Frecuentemente a través de múltiples canales (Email, RRSS)', score: 4 },
+        { text: 'Constantemente, con campañas creativas y multicanal sincronizadas', score: 5 },
+      ],
+    },
+    {
+      category: 'Medición y Analítica',
+      question: '¿Cómo mides el impacto y el ROI de tu programa de lealtad?',
+      options: [
+        { text: 'No medimos el impacto de forma sistemática', score: 1 },
+        { text: 'Medimos métricas básicas como el número de miembros', score: 2 },
+        { text: 'Analizamos la tasa de canje y la actividad general', score: 3 },
+        { text: 'Tenemos un dashboard con KPIs clave (LTV, Frecuencia)', score: 4 },
+        { text: 'Utilizamos modelos de atribución y análisis predictivo para optimizar el ROI', score: 5 },
+      ],
+    },
+  ],
+  resultsMatrix: {
+    grades: [
+      { threshold: 22, grade: 'A', title: 'Ecosistema de Lealtad de Élite', description: 'Tu programa es una máquina de fidelización bien engrasada. Está totalmente integrado, personalizado y optimizado. ¡Felicidades! El siguiente paso es la innovación constante.' },
+      { threshold: 18, grade: 'B', title: 'Ecosistema de Lealtad Robusto', description: 'Tienes una base muy sólida. Tu programa funciona bien y genera valor, pero hay áreas clave, especialmente en comunicación o personalización avanzada, donde puedes mejorar para alcanzar la excelencia.' },
+      { threshold: 13, grade: 'C', title: 'Ecosistema de Lealtad Funcional', description: 'Tu programa cumple su función básica, pero carece de la integración y la experiencia de usuario que define a los líderes. Tienes un gran potencial de crecimiento si inviertes en tecnología y estrategia.' },
+      { threshold: 8, grade: 'D', title: 'Ecosistema de Lealtad Básico', description: 'Estás en las primeras etapas. Tu programa existe, pero no está conectado con tu ecosistema digital, lo que limita severamente su impacto. Es crucial desarrollar una estrategia de integración.' },
+      { threshold: 0, grade: 'F', title: 'Necesitas un Plan de Lealtad', description: 'Tu programa de lealtad opera de forma aislada y con funcionalidades mínimas. Es el momento de re-evaluar tu estrategia desde cero para construir un ecosistema que realmente fidelice a tus clientes.' },
+    ],
+  },
+};
+
+// --- COMPONENTES DE LA UI ---
+// Estos componentes internos no necesitan cambios.
+const WelcomeScreen = ({ onStart }: { onStart: () => void }) => (
+  <div className="text-center max-w-3xl mx-auto">
+    <h1 className="text-4xl md:text-6xl font-bold text-gray-800 dark:text-white leading-tight">
+      ¿Qué tan robusto es el ecosistema digital donde vive tu{' '}
+      <span className="text-indigo-500">programa de lealtad</span>?
+    </h1>
+    <p className="mt-6 text-lg md:text-xl text-gray-600 dark:text-gray-300">
+      Descúbrelo en 2 minutos. Responde 5 preguntas clave y obtén un diagnóstico instantáneo de tu estrategia de fidelización.
+    </p>
+    <button
+      onClick={onStart}
+      className="mt-10 inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105"
+    >
+      Iniciar Auditoría Express
+      <ChevronRight className="ml-2 h-6 w-6" />
+    </button>
+  </div>
+);
+
+const QuestionScreen = ({ question, questionIndex, totalQuestions, onAnswer, onBack }: any) => {
+  const progress = ((questionIndex + 1) / totalQuestions) * 100;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="w-full max-w-3xl mx-auto p-4 md:p-8">
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2 text-sm text-gray-600 dark:text-gray-400">
+          <span>Pregunta {questionIndex + 1} de {totalQuestions}</span>
+          <span>{question.category}</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+          <div className="bg-indigo-500 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+        </div>
+      </div>
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8">{question.question}</h2>
+      <div className="space-y-4">
+        {question.options.map((option: any, index: number) => (
+          <button
+            key={index}
+            onClick={() => onAnswer(question.category, option.score)}
+            className="w-full text-left p-5 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all duration-200 ease-in-out group"
+          >
+            <span className="text-lg text-gray-700 dark:text-gray-200">{option.text}</span>
+          </button>
+        ))}
+      </div>
+       {questionIndex > 0 && (
+        <button onClick={onBack} className="mt-8 text-sm text-gray-500 hover:text-indigo-600">
+          &larr; Volver a la pregunta anterior
+        </button>
+      )}
     </div>
+  );
+};
+
+const ResultsDashboard = ({ answers }: { answers: any }) => {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const categoryScores = useMemo(() => {
+    const scores: { [key: string]: number } = {};
+    auditData.questions.forEach(q => {
+        scores[q.category] = answers[q.category] || 0;
+    });
+    return scores;
+  }, [answers]);
+
+  const totalScore = useMemo(() => Object.values(categoryScores).reduce((sum, score) => sum + score, 0), [categoryScores]);
+
+  const result = useMemo(() => {
+    return auditData.resultsMatrix.grades.find(g => totalScore >= g.threshold);
+  }, [totalScore]);
+
+  const chartData = useMemo(() => 
+    Object.keys(categoryScores).map(category => ({
+      subject: category,
+      A: categoryScores[category],
+      fullMark: 5,
+    })),
+  [categoryScores]);
+
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      console.log('Email submitted:', email);
+      setSubmitted(true);
+    }
+  };
+
+  const icons: { [key: string]: React.ReactNode } = {
+    'Omnicanalidad e Integración': <Zap className="h-6 w-6 text-indigo-500" />,
+    'Experiencia Digital': <Users className="h-6 w-6 text-teal-500" />,
+    'Personalización': <Target className="h-6 w-6 text-amber-500" />,
+    'Comunicación y Engagement': <Mail className="h-6 w-6 text-sky-500" />,
+    'Medición y Analítica': <BarChart2 className="h-6 w-6 text-rose-500" />,
+  };
+
+  if (!result) return null; // Defensive check
+
+  return (
+    <div className="w-full max-w-5xl mx-auto p-4 md:p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-1 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg flex flex-col items-center justify-center text-center">
+          <p className="text-lg text-gray-500 dark:text-gray-400">Tu Calificación</p>
+          <div className="my-4 text-8xl font-bold text-indigo-500">{result.grade}</div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white">{result.title}</h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">{result.description}</p>
+        </div>
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Dashboard de Resultados</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="h-80 w-full">
+              <ResponsiveContainer>
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                  <defs>
+                    <radialGradient id="colorUv" cx="50%" cy="50%" r="80%">
+                      <stop offset="0%" stopColor="#8884d8" stopOpacity={0.5}/>
+                      <stop offset="100%" stopColor="#8884d8" stopOpacity={0}/>
+                    </radialGradient>
+                  </defs>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: 'currentColor', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
+                  <Radar name="Tu Puntuación" dataKey="A" stroke="#8884d8" fill="url(#colorUv)" fillOpacity={0.8} />
+                  <Tooltip contentStyle={{ backgroundColor: '#2d3748', border: 'none', borderRadius: '8px' }}/>
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-4">
+              {chartData.map(item => (
+                <div key={item.subject} className="flex items-center">
+                  <div className="flex-shrink-0 mr-4 bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
+                    {icons[item.subject]}
+                  </div>
+                  <div className="flex-grow">
+                    <div className="flex justify-between items-baseline">
+                      <p className="text-gray-800 dark:text-white font-semibold">{item.subject}</p>
+                      <p className="text-gray-600 dark:text-gray-300 font-bold">{item.A}/5</p>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
+                      <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${(item.A / 5) * 100}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="mt-10 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+        <div className="text-center">
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Recibe tu reporte completo</h3>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">
+            Ingresa tu correo electrónico para enviarte un análisis detallado y recomendaciones personalizadas.
+          </p>
+        </div>
+        {submitted ? (
+          <div className="mt-6 text-center p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center">
+            <CheckCircle className="h-6 w-6 mr-3" />
+            <p className="font-semibold">¡Gracias! Tu reporte ha sido enviado a {email}.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleEmailSubmit} className="mt-6 flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu.correo@empresa.com"
+              required
+              className="flex-grow px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white border-2 border-transparent focus:border-indigo-500 focus:ring-0 rounded-lg transition"
+            />
+            <button
+              type="submit"
+              className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105"
+            >
+              Enviar Reporte
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// --- COMPONENTE PRINCIPAL DE LA PÁGINA ---
+// En Next.js, el componente principal de una página se exporta por defecto.
+export default function HomePage() {
+  const [step, setStep] = useState('welcome'); // 'welcome', 'questions', 'results'
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState({});
+
+  const handleStart = () => {
+    setStep('questions');
+  };
+
+  const handleAnswer = (category: string, score: number) => {
+    const newAnswers = { ...answers, [category]: score };
+    setAnswers(newAnswers);
+
+    if (currentQuestionIndex < auditData.questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      setStep('results');
+    }
+  };
+  
+  const handleBack = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-500">
+      <div className="w-full">
+        {step === 'welcome' && <WelcomeScreen onStart={handleStart} />}
+        
+        {step === 'questions' && (
+          <QuestionScreen
+            question={auditData.questions[currentQuestionIndex]}
+            questionIndex={currentQuestionIndex}
+            totalQuestions={auditData.questions.length}
+            onAnswer={handleAnswer}
+            onBack={handleBack}
+          />
+        )}
+
+        {step === 'results' && <ResultsDashboard answers={answers} />}
+      </div>
+    </main>
   );
 }
