@@ -1,14 +1,36 @@
-// Adaptado para Next.js
-// La directiva 'use client' es esencial para que los componentes interactivos
-// (que usan hooks como useState) funcionen en el App Router de Next.js.
+// Adaptado para Next.js con dependencias externas (CDN)
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { ChevronRight, Mail, BarChart2, Users, Zap, Target, CheckCircle } from 'lucide-react';
+// Head se usa para inyectar scripts en el <head> del documento.
+import Head from 'next/head';
+
+// --- ICONOS SVG (reemplazo de lucide-react) ---
+// En lugar de instalar el paquete, usamos directamente el código SVG de los íconos.
+const ZapIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+);
+const UsersIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+);
+const TargetIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+);
+const MailIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+);
+const BarChart2Icon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+);
+const CheckCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+);
+const ChevronRightIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m9 18 6-6-6-6"/></svg>
+);
+
 
 // --- DATOS DE LA AUDITORÍA ---
-// La estructura de datos permanece idéntica.
 const auditData = {
   questions: [
     {
@@ -80,7 +102,6 @@ const auditData = {
 };
 
 // --- COMPONENTES DE LA UI ---
-// Estos componentes internos no necesitan cambios.
 const WelcomeScreen = ({ onStart }: { onStart: () => void }) => (
   <div className="text-center max-w-3xl mx-auto">
     <h1 className="text-4xl md:text-6xl font-bold text-gray-800 dark:text-white leading-tight">
@@ -95,7 +116,7 @@ const WelcomeScreen = ({ onStart }: { onStart: () => void }) => (
       className="mt-10 inline-flex items-center justify-center px-8 py-4 bg-indigo-600 text-white font-bold text-lg rounded-full shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105"
     >
       Iniciar Auditoría Express
-      <ChevronRight className="ml-2 h-6 w-6" />
+      <ChevronRightIcon className="ml-2 h-6 w-6" />
     </button>
   </div>
 );
@@ -136,6 +157,10 @@ const QuestionScreen = ({ question, questionIndex, totalQuestions, onAnswer, onB
 };
 
 const ResultsDashboard = ({ answers }: { answers: any }) => {
+  // Se accede a los componentes de Recharts desde el objeto window global.
+  // Esto solo funciona en el cliente, por lo que 'use client' es crucial.
+  const { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } = (globalThis as any).Recharts || {};
+
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -170,14 +195,14 @@ const ResultsDashboard = ({ answers }: { answers: any }) => {
   };
 
   const icons: { [key: string]: React.ReactNode } = {
-    'Omnicanalidad e Integración': <Zap className="h-6 w-6 text-indigo-500" />,
-    'Experiencia Digital': <Users className="h-6 w-6 text-teal-500" />,
-    'Personalización': <Target className="h-6 w-6 text-amber-500" />,
-    'Comunicación y Engagement': <Mail className="h-6 w-6 text-sky-500" />,
-    'Medición y Analítica': <BarChart2 className="h-6 w-6 text-rose-500" />,
+    'Omnicanalidad e Integración': <ZapIcon className="h-6 w-6 text-indigo-500" />,
+    'Experiencia Digital': <UsersIcon className="h-6 w-6 text-teal-500" />,
+    'Personalización': <TargetIcon className="h-6 w-6 text-amber-500" />,
+    'Comunicación y Engagement': <MailIcon className="h-6 w-6 text-sky-500" />,
+    'Medición y Analítica': <BarChart2Icon className="h-6 w-6 text-rose-500" />,
   };
 
-  if (!result) return null; // Defensive check
+  if (!result || !ResponsiveContainer) return <div className="text-center">Cargando resultados...</div>;
 
   return (
     <div className="w-full max-w-5xl mx-auto p-4 md:p-8">
@@ -238,7 +263,7 @@ const ResultsDashboard = ({ answers }: { answers: any }) => {
         </div>
         {submitted ? (
           <div className="mt-6 text-center p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg flex items-center justify-center">
-            <CheckCircle className="h-6 w-6 mr-3" />
+            <CheckCircleIcon className="h-6 w-6 mr-3" />
             <p className="font-semibold">¡Gracias! Tu reporte ha sido enviado a {email}.</p>
           </div>
         ) : (
@@ -265,9 +290,8 @@ const ResultsDashboard = ({ answers }: { answers: any }) => {
 };
 
 // --- COMPONENTE PRINCIPAL DE LA PÁGINA ---
-// En Next.js, el componente principal de una página se exporta por defecto.
 export default function HomePage() {
-  const [step, setStep] = useState('welcome'); // 'welcome', 'questions', 'results'
+  const [step, setStep] = useState('welcome');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
 
@@ -293,22 +317,31 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-500">
-      <div className="w-full">
-        {step === 'welcome' && <WelcomeScreen onStart={handleStart} />}
-        
-        {step === 'questions' && (
-          <QuestionScreen
-            question={auditData.questions[currentQuestionIndex]}
-            questionIndex={currentQuestionIndex}
-            totalQuestions={auditData.questions.length}
-            onAnswer={handleAnswer}
-            onBack={handleBack}
-          />
-        )}
+    <>
+      <Head>
+        <title>Auditoría de Lealtad</title>
+        {/* Carga Tailwind CSS desde el CDN */}
+        <script src="https://cdn.tailwindcss.com"></script>
+        {/* Carga Recharts desde el CDN */}
+        <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script>
+      </Head>
+      <main className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 transition-colors duration-500">
+        <div className="w-full">
+          {step === 'welcome' && <WelcomeScreen onStart={handleStart} />}
+          
+          {step === 'questions' && (
+            <QuestionScreen
+              question={auditData.questions[currentQuestionIndex]}
+              questionIndex={currentQuestionIndex}
+              totalQuestions={auditData.questions.length}
+              onAnswer={handleAnswer}
+              onBack={handleBack}
+            />
+          )}
 
-        {step === 'results' && <ResultsDashboard answers={answers} />}
-      </div>
-    </main>
+          {step === 'results' && <ResultsDashboard answers={answers} />}
+        </div>
+      </main>
+    </>
   );
 }
